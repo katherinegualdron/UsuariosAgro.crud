@@ -8,5 +8,5 @@ type Rol struct {
 	Descripcion       *string    `json:"descripcion"`
 	Activo            bool       `json:"activo"`
 	FechaCreacion     time.Time  `json:"fecha_creacion"`
-	FechaModificacion time.Time  `json:"fecha_modificacion"`
+	FechaModificacion *time.Time `json:"fecha_modificacion"`
 }

@@ -13,7 +13,7 @@ import (
 )
 
 func ObtenerRoles(w http.ResponseWriter, r *http.Request) {
-	rows, err := config.DB.Query(`SELECT id_rol, nombre_rol, descripcion, activo, fecha_creacion, fecha_modificacion FROM "Rol" ORDER BY id_rol`)
+	rows, err := config.DB.Query(`SELECT id_rol, nombre_rol, descripcion, activo, fecha_creacion, fecha_modificacion FROM "Usuarios"."Rol" ORDER BY id_rol ASC`)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "error al consultar rol")
 		return
@@ -38,7 +38,7 @@ func ObtenerRolPorID(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "id invalido")
 		return
 	}
-	row := config.DB.QueryRow(`SELECT id_rol, nombre_rol, descripcion, activo, fecha_creacion, fecha_modificacion FROM "Rol" WHERE id_rol = $1`, id)
+	row := config.DB.QueryRow(`SELECT id_rol, nombre_rol, descripcion, activo, fecha_creacion, fecha_modificacion FROM "Usuarios"."Rol" WHERE id_rol = $1`, id)
 	item, err := scanRol(row.Scan)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -57,7 +57,7 @@ func CrearRol(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "json invalido")
 		return
 	}
-	row := config.DB.QueryRow(`INSERT INTO "Rol" (nombre_rol, descripcion, activo) VALUES ($1, $2, $3) RETURNING id_rol, nombre_rol, descripcion, activo, fecha_creacion, fecha_modificacion`,
+	row := config.DB.QueryRow(`INSERT INTO "Usuarios"."Rol" (nombre_rol, descripcion, activo) VALUES ($1, $2, $3) RETURNING id_rol, nombre_rol, descripcion, activo, fecha_creacion, fecha_modificacion`,
 		item.NombreRol, item.Descripcion, item.Activo)
 	item, err := scanRol(row.Scan)
 	if err != nil {
@@ -78,7 +78,7 @@ func ActualizarRol(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "json invalido")
 		return
 	}
-	row := config.DB.QueryRow(`UPDATE "Rol" SET nombre_rol = $1, descripcion = $2, activo = $3 WHERE id_rol = $4 RETURNING id_rol, nombre_rol, descripcion, activo, fecha_creacion, fecha_modificacion`,
+	row := config.DB.QueryRow(`UPDATE "Usuarios"."Rol" SET nombre_rol = $1, descripcion = $2, activo = $3 WHERE id_rol = $4 RETURNING id_rol, nombre_rol, descripcion, activo, fecha_creacion, fecha_modificacion`,
 		item.NombreRol, item.Descripcion, item.Activo, id)
 	item, err = scanRol(row.Scan)
 	if err != nil {
@@ -98,7 +98,7 @@ func EliminarRol(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "id invalido")
 		return
 	}
-	result, err := config.DB.Exec(`DELETE FROM "Rol" WHERE id_rol = $1`, id)
+	result, err := config.DB.Exec(`DELETE FROM "Usuarios"."Rol" WHERE id_rol = $1`, id)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23503" {
 			writeError(w, http.StatusConflict, "no se puede eliminar rol porque tiene registros relacionados")
@@ -118,10 +118,12 @@ func EliminarRol(w http.ResponseWriter, r *http.Request) {
 func scanRol(scan func(dest ...any) error) (models.Rol, error) {
 	var item models.Rol
 	var descripcion sql.NullString
-	err := scan(&item.IdRol, &item.NombreRol, &descripcion, &item.Activo, &item.FechaCreacion, &item.FechaModificacion)
+	var fechaModificacion sql.NullTime
+	err := scan(&item.IdRol, &item.NombreRol, &descripcion, &item.Activo, &item.FechaCreacion, &fechaModificacion)
 	if err != nil {
 		return models.Rol{}, err
 	}
 	item.Descripcion = nullStringToPointer(descripcion)
+	item.FechaModificacion = nullTimeToPointer(fechaModificacion)
 	return item, nil
 }

@@ -16,10 +16,10 @@ func ConnectDB() {
 	user := "postgres"
 	password := "postgres"
 	dbname := "Agrocampo"
-	schema := "Usuarios"
+	schema := "\"Usuarios\""
 
 	psqlInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s search_path=%s sslmode=disable",
+		"host=%s port=%d user=%s password=%s dbname=%s options='-c search_path=%s' sslmode=disable",
 		host, port, user, password, dbname, schema,
 	)
 
